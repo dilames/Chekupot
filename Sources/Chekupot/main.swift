@@ -13,5 +13,5 @@ let platform = Platform()
 while true {
     let string = platform.service.execute(.measureTemp)
     print(string)
-    Thread.sleep(forTimeInterval: 2)
+    Thread.sleep(forTimeInterval: 7)
 }

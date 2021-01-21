@@ -26,7 +26,6 @@ public final class MonitoringService {
         let process = vcgencmd
         process.arguments = [argument.argument, argument.subarguments ?? ""]
         try? process.run()
-        process.waitUntilExit()
         return String(
             data: pipe.fileHandleForReading.readDataToEndOfFile(),
             encoding: .utf8
