@@ -12,12 +12,26 @@ import Foundation
 
 public final class MonitoringService {
     
-    private lazy var vcgencmd: Process = {
+    private var pipe: Pipe = Pipe()
+    
+    private var vcgencmd: Process {
         let task = Process()
-        task.launchPath = "/usr/bin/vcgencmd"
+        task.executableURL = URL(fileURLWithPath: "/usr/bin/vcgencmd")
         task.qualityOfService = .background
+        task.standardOutput = pipe
         return task
-    }()
+    }
+    
+    func execute(_ argument: Argument) -> String {
+        let process = vcgencmd
+        process.arguments = [argument.argument, argument.subarguments ?? ""]
+        try? process.run()
+        process.waitUntilExit()
+        return String(
+            data: pipe.fileHandleForReading.readDataToEndOfFile(),
+            encoding: .utf8
+        ) ?? ""
+    }
     
 }
 
@@ -128,7 +142,7 @@ public extension MonitoringService {
 
 extension MonitoringService.Argument {
     
-    var rawValue: String {
+    var argument: String {
         switch self {
         case .getCamera: return "get_camera"
         case .getThrottled: return "get_throttled"
@@ -136,6 +150,14 @@ extension MonitoringService.Argument {
         case .measureVolts: return "measure_volts"
         case .getMemory: return "get_mem"
         case .getLcdInfo: return "get_lcd_info"
+        }
+    }
+    
+    var subarguments: String? {
+        switch self {
+        case .getMemory(let subargument): return subargument.rawValue
+        case .measureVolts(let subargument): return subargument.rawValue
+        default: return nil
         }
     }
     
