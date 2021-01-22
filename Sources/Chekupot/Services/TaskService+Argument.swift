@@ -1,58 +1,13 @@
 //
-//  File.swift
-//  
+//  TaskService+Argument.swift
+//  Chekupot
 //
-//  Created by Andrew Chersky on 21.01.2021.
+//  Created by Andrew Chersky on 22.01.2021.
 //
 
 import Foundation
 
-// cat /sys/class/thermal/thermal_zone0/temp
-// vcgencmd measure_temp
-
-public final class MonitoringService {
-    
-    private var pipe: Pipe = Pipe()
-    
-    private var vcgencmd: Process {
-        let task = Process()
-        task.executableURL = URL(fileURLWithPath: "/usr/bin/vcgencmd")
-        task.qualityOfService = .background
-        task.standardOutput = pipe
-        return task
-    }
-    
-    func execute(_ argument: Argument) -> String {
-        let process = vcgencmd
-        process.arguments = [argument.argument, argument.subarguments ?? ""]
-        try? process.run()
-        return String(
-            data: pipe.fileHandleForReading.readDataToEndOfFile(),
-            encoding: .utf8
-        ) ?? ""
-    }
-    
-}
-
-public extension MonitoringService.Argument {
-    
-    // Measure Volts Arguments
-    enum MVArgument: String {
-        case core
-        case sdram_c
-        case sdram_i
-        case sdram_p
-    }
-    
-    enum GMArgument: String {
-        case arm
-        case gpu
-    }
-    
-}
-
-
-public extension MonitoringService {
+public extension TaskService {
     
     /// https://www.raspberrypi.org/documentation/raspbian/applications/vcgencmd.md
     
@@ -135,11 +90,33 @@ public extension MonitoringService {
          */
         case getLcdInfo
         
+        /*
+         This returns the current frequency of the specified clock. The options are:
+         
+        * * * * * * * * * * * * * * * * * * * * * * * * *
+        *  clock  *             Description             *
+        * * * * * * * * * * * * * * * * * * * * * * * * *
+        *  arm   *  ARM cores                           *
+        *  core  *  VC4 scaler cores                    *
+        *  H264  *  H264 block                          *
+        *  isp   *  Image Signal Processor              *
+        *  v3d   *  3D block                            *
+        *  uart  *  UART                                *
+        *  pwm   *  PWM block (analogue audio output)   *
+        *  emmc  *  SD card interface                   *
+        *  pixel *  Pixel valve                         *
+        *  vec   *  Analogue video encoder              *
+        *  hdmi  *  HDMI                                *
+        *  dpi   *  Display Peripheral Interface        *
+        * * * * * * * * * * * * * * * * * * * * * * * * *
+         */
+        case measureClock
+        
     }
     
 }
 
-extension MonitoringService.Argument {
+extension TaskService.Argument {
     
     var argument: String {
         switch self {
@@ -149,6 +126,7 @@ extension MonitoringService.Argument {
         case .measureVolts: return "measure_volts"
         case .getMemory: return "get_mem"
         case .getLcdInfo: return "get_lcd_info"
+        case .measureClock: return "measure_clock"
         }
     }
     
@@ -158,6 +136,38 @@ extension MonitoringService.Argument {
         case .measureVolts(let subargument): return subargument.rawValue
         default: return nil
         }
+    }
+    
+}
+
+public extension TaskService.Argument {
+    
+    // Measure Volts Arguments
+    enum MVArgument: String {
+        case core
+        case sdram_c
+        case sdram_i
+        case sdram_p
+    }
+    
+    enum GMArgument: String {
+        case arm
+        case gpu
+    }
+    
+    enum MCArgument: String {
+        case arm
+        case core
+        case H264
+        case isp
+        case v3d
+        case uart
+        case pwm
+        case emmc
+        case pixel
+        case vec
+        case hdmi
+        case dpi
     }
     
 }
